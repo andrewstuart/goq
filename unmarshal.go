@@ -18,12 +18,38 @@ type valFunc func(*Selection) string
 
 type goqueryTag string
 
+const prePfx = '!'
+
+func (tag goqueryTag) preprocess(s *Selection) *Selection {
+	arr := strings.Split(string(tag), ",")
+	var offset int
+	for len(arr)-1 > offset && arr[offset][0] == prePfx {
+		meth := arr[offset][1:]
+		v := reflect.ValueOf(s).MethodByName(meth)
+		if !v.IsValid() {
+			return s
+		}
+
+		result := v.Call(nil)
+
+		if sel, ok := result[0].Interface().(*Selection); ok {
+			s = sel
+		}
+		offset++
+	}
+	return s
+}
+
 func (tag goqueryTag) selector(which int) string {
 	arr := strings.Split(string(tag), ",")
 	if which > len(arr)-1 {
 		return ""
 	}
-	return arr[which]
+	var offset int
+	for len(arr) > offset && arr[offset][0] == prePfx {
+		offset++
+	}
+	return arr[which+offset]
 }
 
 var (
@@ -66,6 +92,8 @@ func (tag goqueryTag) valFunc() valFunc {
 		f = attrFunc(attr)
 	case src == "html":
 		f = htmlVal
+	case src == "text":
+		f = textVal
 	default:
 		f = textVal
 	}
@@ -88,6 +116,11 @@ func (tag goqueryTag) popVal() goqueryTag {
 	return goqueryTag(strings.Join(newA, ","))
 }
 
+// Unmarshal takes a byte slice and a destination pointer to any
+// interface{}, and unmarshals the document into the destination based on the
+// rules above. Any error returned here can be expected to be of type
+// CannotUnmarshalError.
+//
 // Now included in GoQuery is the ability to declaratively unmarshal your HTML
 // into go structs using struct tags composed of css selectors.
 //
@@ -146,10 +179,6 @@ func (tag goqueryTag) popVal() goqueryTag {
 // `[foo]` will be used to determine the string map key,but `[bar]` and `[baz]`
 // will be ignored, with the `[bang]` tag present S struct type taking
 // precedence.
-//
-// The Unmarhsal function takes a byte slice and a destination pointer to any
-// interface{}, and unmarshals the document into the destination based on the
-// rules above.
 func Unmarshal(bs []byte, v interface{}) error {
 	d, err := NewDocumentFromReader(bytes.NewReader(bs))
 
@@ -283,7 +312,7 @@ func unmarshalStruct(s *Selection, v reflect.Value) error {
 	for i := 0; i < t.NumField(); i++ {
 		tag := goqueryTag(t.Field(i).Tag.Get("goquery"))
 
-		sel := s
+		sel := tag.preprocess(s)
 		if tag != "" {
 			selStr := tag.selector(0)
 			sel = sel.Find(selStr)

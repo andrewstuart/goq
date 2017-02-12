@@ -3,6 +3,7 @@ package goquery
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"testing"
 
 	"golang.org/x/net/html"
@@ -549,9 +550,31 @@ const hnPage = `<html op="news"><head><meta name="referrer" content="origin"><me
         <span class="score" id="score_13542428">153 points</span> by <a href="user?id=phreeza" class="hnuser">phreeza</a> <span class="age"><a href="item?id=13542428">6 hours ago</a></span> <span id="unv_13542428"></span> | <a href="hide?id=13542428&amp;goto=news">hide</a> | <a href="item?id=13542428">150&nbsp;comments</a>              </td></tr>
       <tr class="spacer" style="height:5px"></tr>
                 <tr class='athing' id='13546354'>
-      <td align="right" valign="top" class="title"><span class="rank">30.</span></td>      <td valign="top" class="votelinks"><center><a id='up_13546354' href='vote?id=13546354&amp;how=up&amp;goto=news'><div class='votearrow' title='upvote'></div></a></center></td><td class="title"><a href="http://crypto.stackexchange.com/questions/26336/sha512-faster-than-sha256" class="storylink">SHA-512 is 1.5x faster than SHA-256 on 64-bit platforms</a><span class="sitebit comhead"> (<a href="from?site=stackexchange.com"><span class="sitestr">stackexchange.com</span></a>)</span></td></tr><tr><td colspan="2"></td><td class="subtext">
-        <span class="score" id="score_13546354">7 points</span> by <a href="user?id=steffenweber" class="hnuser">steffenweber</a> <span class="age"><a href="item?id=13546354">51 minutes ago</a></span> <span id="unv_13546354"></span> | <a href="hide?id=13546354&amp;goto=news">hide</a> | <a href="item?id=13546354">discuss</a>              </td></tr>
-      <tr class="spacer" style="height:5px"></tr>
+									<td align="right" valign="top" class="title">
+										<span class="rank">30.</span>
+									</td>
+									<td valign="top" class="votelinks">
+										<center><a id='up_13546354' href='vote?id=13546354&amp;how=up&amp;goto=news'><div class='votearrow' title='upvote'></div></a></center>
+									</td>
+									<td class="title">
+										<a href="http://crypto.stackexchange.com/questions/26336/sha512-faster-than-sha256" class="storylink">SHA-512 is 1.5x faster than SHA-256 on 64-bit platforms</a>
+										<span class="sitebit comhead"> (<a href="from?site=stackexchange.com"><span class="sitestr">stackexchange.com</span></a>)</span>
+									</td>
+								</tr>
+								<tr>
+									<td colspan="2"></td>
+									<td class="subtext">
+										<span class="score" id="score_13546354">7 points</span> by 
+										<a href="user?id=steffenweber" class="hnuser">steffenweber</a>
+										<span class="age"><a href="item?id=13546354">51 minutes ago</a></span>
+										<span id="unv_13546354"></span>
+										|
+										<a href="hide?id=13546354&amp;goto=news">hide</a>
+										|
+										<a href="item?id=13546354">discuss</a>
+									</td>
+								</tr>
+								<tr class="spacer" style="height:5px"></tr>
             <tr class="morespace" style="height:10px"></tr><tr><td colspan="2"></td><td class="title"><a href="news?p=2" class="morelink" rel="nofollow">More</a></td></tr>
   </table>
 </td></tr>
@@ -572,9 +595,25 @@ type page struct {
 	Items map[int]*item `goquery:".itemlist,[id]"`
 }
 
+type score int
+
+func (s *score) UnmarshalHTML(nodes []*html.Node) error {
+	sel := &Selection{}
+	sel = sel.AddNodes(nodes...)
+	num := strings.Split(sel.Text(), " ")[0]
+	n, err := strconv.ParseInt(num, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	*s = score(n)
+	return nil
+}
+
 type item struct {
-	Link string `goquery:".title a,[href]"`
-	Site string `goquery:".title .sitestr,text"`
+	Link   string `goquery:".title a,[href]"`
+	Site   string `goquery:".title .sitestr,text"`
+	Points string `goquery:"@Next,.score,text"`
 }
 
 func TestHNPage(t *testing.T) {
@@ -589,4 +628,5 @@ func TestHNPage(t *testing.T) {
 	i := *p.Items[13546354]
 	asrt.Equal("http://crypto.stackexchange.com/questions/26336/sha512-faster-than-sha256", i.Link)
 	asrt.Equal("stackexchange.com", i.Site)
+	asrt.Equal("7 points", i.Points)
 }
