@@ -14,7 +14,7 @@ const (
 	arrayLengthMismatch  = "array length does not match document elements found"
 	customUnmarshalError = "a custom Unmarshaler implementation threw an error"
 	typeConversionError  = "a type conversion error occurred"
-	nonStringMapKey      = "a map with non-string key type cannot be unmarshaled"
+	mapKeyUnmarshalError = "error unmarshaling a map key"
 	missingValueSelector = "at least one value selector must be passed to use as map index"
 )
 
@@ -53,7 +53,10 @@ func (e errChain) tPath() string {
 				}
 			case int:
 				nest += fmt.Sprintf("[%d]", nesting)
+			case *int:
+				nest += fmt.Sprintf("[%d]", *nesting)
 			default:
+				fmt.Printf("err.FldOrIdx = %#v\n", err.FldOrIdx)
 				nest += fmt.Sprintf("[%v]", nesting)
 			}
 		}

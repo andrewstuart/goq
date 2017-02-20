@@ -596,6 +596,10 @@ type page struct {
 	Items map[int]*item `goquery:".itemlist,[id]"`
 }
 
+type pageNoPtr struct {
+	Items map[int]item `goquery:".itemlist,[id]"`
+}
+
 type score int
 
 func (s *score) UnmarshalHTML(nodes []*html.Node) error {
@@ -621,12 +625,13 @@ func TestHNPage(t *testing.T) {
 	asrt := assert.New(t)
 
 	var p page
+	var p2 pageNoPtr
 
 	asrt.NoError(Unmarshal([]byte(hnPage), &p))
 	asrt.Len(p.Items, 30)
 	asrt.NotNil(p.Items[13546354])
 
-	i := *p.Items[13546354]
+	i := p.Items[13546354]
 	asrt.Equal("http://crypto.stackexchange.com/questions/26336/sha512-faster-than-sha256", i.Link)
 	asrt.Equal("stackexchange.com", i.Site)
 	asrt.Equal("7 points", i.Points)

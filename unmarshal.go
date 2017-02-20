@@ -123,8 +123,9 @@ func (tag goqueryTag) popVal() goqueryTag {
 
 // Unmarshal takes a byte slice and a destination pointer to any
 // interface{}, and unmarshals the document into the destination based on the
-// rules above. Any error returned here can be expected to be of type
-// CannotUnmarshalError.
+// rules above. Any error returned here will likely be of type
+// CannotUnmarshalError, though an initial goquery error will pass through
+// directly.
 //
 // Now included in GoQuery is the ability to declaratively unmarshal your HTML
 // into go structs using struct tags composed of css selectors.
@@ -257,13 +258,14 @@ func unmarshalByType(s *goquery.Selection, v reflect.Value, tag goqueryTag) erro
 		return unmarshalMap(s, v, tag)
 	default:
 		vf := tag.valFunc()
-		err := unmarshalLiteral(vf(s), v)
+		str := vf(s)
+		err := unmarshalLiteral(str, v)
 		if err != nil {
 			return &CannotUnmarshalError{
 				v:      v,
 				reason: typeConversionError,
 				Err:    err,
-				Val:    vf(s),
+				Val:    str,
 			}
 		}
 		return nil
@@ -423,29 +425,25 @@ func unmarshalMap(s *goquery.Selection, v reflect.Value, tag goqueryTag) error {
 		}
 	}
 
-	// Will be altered shortly
 	valTag := tag
-	switch eleT.Kind() {
-	case reflect.Slice, reflect.Array, reflect.Struct:
-	default:
-		// Find children at the same level that match the given selector
-		s = childrenUntilMatch(s, tag.selector(1))
-		// Then augment the selector we will pass down to the next unmarshal step
-		valTag = valTag.popVal()
-	}
+
+	// Find children at the same level that match the given selector
+	s = childrenUntilMatch(s, tag.selector(1))
+	// Then augment the selector we will pass down to the next unmarshal step
+	valTag = valTag.popVal()
 
 	var err error
-	var fld interface{}
 	s.EachWithBreak(func(_ int, subS *goquery.Selection) bool {
 		newK, newV := reflect.New(typeDeref(keyT)), reflect.New(typeDeref(eleT))
 
 		err = unmarshalByType(subS, newK, tag)
-		fld = newK.Interface()
 		if err != nil {
 			err = &CannotUnmarshalError{
-				reason: nonStringMapKey,
-				v:      v,
-				Err:    err,
+				reason:   mapKeyUnmarshalError,
+				v:        v,
+				Err:      err,
+				FldOrIdx: newK.Interface(),
+				Val:      valTag.valFunc()(subS),
 			}
 			return false
 		}
@@ -469,10 +467,9 @@ func unmarshalMap(s *goquery.Selection, v reflect.Value, tag goqueryTag) error {
 
 	if err != nil {
 		return &CannotUnmarshalError{
-			reason:   typeConversionError,
-			Err:      err,
-			v:        v,
-			FldOrIdx: fld,
+			reason: typeConversionError,
+			Err:    err,
+			v:      v,
 		}
 	}
 
