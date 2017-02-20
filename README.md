@@ -2,21 +2,8 @@
 --
     import "astuart.co/goquery-unmarshal"
 
-
-## Usage
-
-#### func  Unmarshal
-
-```go
-func Unmarshal(bs []byte, v interface{}) error
-```
-Unmarshal takes a byte slice and a destination pointer to any interface{}, and
-unmarshals the document into the destination based on the rules above. Any error
-returned here will likely be of type CannotUnmarshalError, though an initial
-goquery error will pass through directly.
-
-Now included in GoQuery is the ability to declaratively unmarshal your HTML into
-go structs using struct tags composed of css selectors.
+Package goq was built to allow to to declaratively unmarshal your HTML into go
+structs using struct tags composed of css selectors.
 
 We've made a best effort to behave very similarly to JSON and XML decoding as
 well as exposing as much information as possible in the event of an error to
@@ -72,6 +59,18 @@ given:
 
 `[foo]` will be used to determine the string map key,but `[bar]` and `[baz]`
 will be ignored, with the `[bang]` tag present S struct type taking precedence.
+
+## Usage
+
+#### func  Unmarshal
+
+```go
+func Unmarshal(bs []byte, v interface{}) error
+```
+Unmarshal takes a byte slice and a destination pointer to any interface{}, and
+unmarshals the document into the destination based on the rules above. Any error
+returned here will likely be of type CannotUnmarshalError, though an initial
+goquery error will pass through directly.
 
 #### func  UnmarshalSelection
 
