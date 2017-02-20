@@ -1,10 +1,12 @@
-package goquery
+package goq
 
 import (
 	"bytes"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/PuerkitoBio/goquery"
 
 	"golang.org/x/net/html"
 )
@@ -14,13 +16,16 @@ type Unmarshaler interface {
 	UnmarshalHTML([]*html.Node) error
 }
 
-type valFunc func(*Selection) string
+type valFunc func(*goquery.Selection) string
 
 type goqueryTag string
 
-const prePfx = '!'
+const (
+	prePfx  = '!'
+	tagName = "goquery"
+)
 
-func (tag goqueryTag) preprocess(s *Selection) *Selection {
+func (tag goqueryTag) preprocess(s *goquery.Selection) *goquery.Selection {
 	arr := strings.Split(string(tag), ",")
 	var offset int
 	for len(arr)-1 > offset && arr[offset][0] == prePfx {
@@ -32,7 +37,7 @@ func (tag goqueryTag) preprocess(s *Selection) *Selection {
 
 		result := v.Call(nil)
 
-		if sel, ok := result[0].Interface().(*Selection); ok {
+		if sel, ok := result[0].Interface().(*goquery.Selection); ok {
 			s = sel
 		}
 		offset++
@@ -53,10 +58,10 @@ func (tag goqueryTag) selector(which int) string {
 }
 
 var (
-	textVal valFunc = func(s *Selection) string {
+	textVal valFunc = func(s *goquery.Selection) string {
 		return strings.TrimSpace(s.Text())
 	}
-	htmlVal = func(s *Selection) string {
+	htmlVal = func(s *goquery.Selection) string {
 		str, _ := s.Html()
 		return strings.TrimSpace(str)
 	}
@@ -65,7 +70,7 @@ var (
 )
 
 func attrFunc(attr string) valFunc {
-	return func(s *Selection) string {
+	return func(s *goquery.Selection) string {
 		str, _ := s.Attr(attr)
 		return str
 	}
@@ -141,8 +146,8 @@ func (tag goqueryTag) popVal() goqueryTag {
 //
 // - A value selector may be one of `html`, `text`, or `[someAttrName]`. `html`
 // and `text` will result in the methods of the same name being called on the
-// `*Selection` to obtain the value. `[someAttrName]` will result in
-// `*Selection.Attr("someAttrName")` being called for the value.
+// `*goquery.Selection` to obtain the value. `[someAttrName]` will result in
+// `*goquery.Selection.Attr("someAttrName")` being called for the value.
 //
 // - A primitive value type will default to the text value of the resulting
 // nodes if no value selector is given.
@@ -180,7 +185,7 @@ func (tag goqueryTag) popVal() goqueryTag {
 // will be ignored, with the `[bang]` tag present S struct type taking
 // precedence.
 func Unmarshal(bs []byte, v interface{}) error {
-	d, err := NewDocumentFromReader(bytes.NewReader(bs))
+	d, err := goquery.NewDocumentFromReader(bytes.NewReader(bs))
 
 	if err != nil {
 		return err
@@ -194,25 +199,25 @@ func wrapUnmErr(err error, v reflect.Value) error {
 		return nil
 	}
 
-	return &cannotUnmarshalError{
+	return &CannotUnmarshalError{
 		v:      v,
 		reason: customUnmarshalError,
 		Err:    err,
 	}
 }
 
-// UnmarshalSelection will unmarshal a goquery.Selection into an interface
+// UnmarshalSelection will unmarshal a goquery.goquery.Selection into an interface
 // appropriately annoated with goquery tags.
-func UnmarshalSelection(s *Selection, iface interface{}) error {
+func UnmarshalSelection(s *goquery.Selection, iface interface{}) error {
 	v := reflect.ValueOf(iface)
 
 	// Must come before v.IsNil() else IsNil panics on NonPointer value
 	if v.Kind() != reflect.Ptr {
-		return &cannotUnmarshalError{v: v, reason: nonPointer}
+		return &CannotUnmarshalError{v: v, reason: nonPointer}
 	}
 
 	if iface == nil || v.IsNil() {
-		return &cannotUnmarshalError{v: v, reason: nilValue}
+		return &CannotUnmarshalError{v: v, reason: nilValue}
 	}
 
 	u, v := indirect(v)
@@ -224,7 +229,7 @@ func UnmarshalSelection(s *Selection, iface interface{}) error {
 	return unmarshalByType(s, v, "")
 }
 
-func unmarshalByType(s *Selection, v reflect.Value, tag goqueryTag) error {
+func unmarshalByType(s *goquery.Selection, v reflect.Value, tag goqueryTag) error {
 	u, v := indirect(v)
 
 	if u != nil {
@@ -254,7 +259,7 @@ func unmarshalByType(s *Selection, v reflect.Value, tag goqueryTag) error {
 		vf := tag.valFunc()
 		err := unmarshalLiteral(vf(s), v)
 		if err != nil {
-			return &cannotUnmarshalError{
+			return &CannotUnmarshalError{
 				v:      v,
 				reason: typeConversionError,
 				Err:    err,
@@ -306,11 +311,11 @@ func unmarshalLiteral(s string, v reflect.Value) error {
 	return nil
 }
 
-func unmarshalStruct(s *Selection, v reflect.Value) error {
+func unmarshalStruct(s *goquery.Selection, v reflect.Value) error {
 	t := v.Type()
 
 	for i := 0; i < t.NumField(); i++ {
-		tag := goqueryTag(t.Field(i).Tag.Get("goquery"))
+		tag := goqueryTag(t.Field(i).Tag.Get(tagName))
 
 		sel := tag.preprocess(s)
 		if tag != "" {
@@ -320,7 +325,7 @@ func unmarshalStruct(s *Selection, v reflect.Value) error {
 
 		err := unmarshalByType(sel, v.Field(i), tag)
 		if err != nil {
-			return &cannotUnmarshalError{
+			return &CannotUnmarshalError{
 				reason:   typeConversionError,
 				Err:      err,
 				v:        v,
@@ -331,9 +336,9 @@ func unmarshalStruct(s *Selection, v reflect.Value) error {
 	return nil
 }
 
-func unmarshalArray(s *Selection, v reflect.Value, tag goqueryTag) error {
+func unmarshalArray(s *goquery.Selection, v reflect.Value, tag goqueryTag) error {
 	if v.Type().Len() != len(s.Nodes) {
-		return &cannotUnmarshalError{
+		return &CannotUnmarshalError{
 			reason: arrayLengthMismatch,
 			v:      v,
 		}
@@ -342,7 +347,7 @@ func unmarshalArray(s *Selection, v reflect.Value, tag goqueryTag) error {
 	for i := 0; i < v.Type().Len(); i++ {
 		err := unmarshalByType(s.Eq(i), v.Index(i), tag)
 		if err != nil {
-			return &cannotUnmarshalError{
+			return &CannotUnmarshalError{
 				reason:   typeConversionError,
 				Err:      err,
 				v:        v,
@@ -361,7 +366,7 @@ func typeDeref(t reflect.Type) reflect.Type {
 	return t
 }
 
-func unmarshalSlice(s *Selection, v reflect.Value, tag goqueryTag) error {
+func unmarshalSlice(s *goquery.Selection, v reflect.Value, tag goqueryTag) error {
 	slice := v
 	eleT := v.Type().Elem()
 
@@ -371,7 +376,7 @@ func unmarshalSlice(s *Selection, v reflect.Value, tag goqueryTag) error {
 		err := unmarshalByType(s.Eq(i), newV, tag)
 
 		if err != nil {
-			return &cannotUnmarshalError{
+			return &CannotUnmarshalError{
 				reason:   typeConversionError,
 				Err:      err,
 				v:        v,
@@ -390,7 +395,7 @@ func unmarshalSlice(s *Selection, v reflect.Value, tag goqueryTag) error {
 	return nil
 }
 
-func childrenUntilMatch(s *Selection, sel string) *Selection {
+func childrenUntilMatch(s *goquery.Selection, sel string) *goquery.Selection {
 	orig := s
 	s = s.Children()
 	for s.Length() != 0 && s.Filter(sel).Length() == 0 {
@@ -402,7 +407,7 @@ func childrenUntilMatch(s *Selection, sel string) *Selection {
 	return s.Filter(sel)
 }
 
-func unmarshalMap(s *Selection, v reflect.Value, tag goqueryTag) error {
+func unmarshalMap(s *goquery.Selection, v reflect.Value, tag goqueryTag) error {
 	// Make new map here because indirect for some reason doesn't help us out
 	if v.IsNil() {
 		v.Set(reflect.MakeMap(v.Type()))
@@ -412,7 +417,7 @@ func unmarshalMap(s *Selection, v reflect.Value, tag goqueryTag) error {
 
 	if tag.selector(1) == "" {
 		// We need minimum one value selector to determine the map key
-		return &cannotUnmarshalError{
+		return &CannotUnmarshalError{
 			reason: missingValueSelector,
 			v:      v,
 		}
@@ -431,13 +436,13 @@ func unmarshalMap(s *Selection, v reflect.Value, tag goqueryTag) error {
 
 	var err error
 	var fld interface{}
-	s.EachWithBreak(func(_ int, subS *Selection) bool {
+	s.EachWithBreak(func(_ int, subS *goquery.Selection) bool {
 		newK, newV := reflect.New(typeDeref(keyT)), reflect.New(typeDeref(eleT))
 
 		err = unmarshalByType(subS, newK, tag)
 		fld = newK.Interface()
 		if err != nil {
-			err = &cannotUnmarshalError{
+			err = &CannotUnmarshalError{
 				reason: nonStringMapKey,
 				v:      v,
 				Err:    err,
@@ -463,7 +468,7 @@ func unmarshalMap(s *Selection, v reflect.Value, tag goqueryTag) error {
 	})
 
 	if err != nil {
-		return &cannotUnmarshalError{
+		return &CannotUnmarshalError{
 			reason:   typeConversionError,
 			Err:      err,
 			v:        v,

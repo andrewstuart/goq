@@ -1,4 +1,4 @@
-package goquery
+package goq
 
 import (
 	"fmt"
@@ -18,9 +18,9 @@ const (
 	missingValueSelector = "at least one value selector must be passed to use as map index"
 )
 
-// cannotUnmarshalError represents an error returned by the goquery Unmarshaler
+// CannotUnmarshalError represents an error returned by the goquery Unmarshaler
 // and helps consumers in programmatically diagnosing the cause of their error.
-type cannotUnmarshalError struct {
+type CannotUnmarshalError struct {
 	Err      error
 	Val      string
 	FldOrIdx interface{}
@@ -31,7 +31,7 @@ type cannotUnmarshalError struct {
 
 // This type is a mid-level abstraction to help understand the error printing logic
 type errChain struct {
-	chain []*cannotUnmarshalError
+	chain []*CannotUnmarshalError
 	val   string
 	tail  error
 }
@@ -62,7 +62,7 @@ func (e errChain) tPath() string {
 	return nest
 }
 
-func (e errChain) last() *cannotUnmarshalError {
+func (e errChain) last() *CannotUnmarshalError {
 	return e.chain[len(e.chain)-1]
 }
 
@@ -100,8 +100,8 @@ func (e errChain) Error() string {
 
 // Traverse e.Err, printing hopefully helpful type info until there are no more
 // chained errors.
-func (e *cannotUnmarshalError) unwind() *errChain {
-	str := &errChain{chain: []*cannotUnmarshalError{}}
+func (e *CannotUnmarshalError) unwind() *errChain {
+	str := &errChain{chain: []*CannotUnmarshalError{}}
 	for {
 		str.chain = append(str.chain, e)
 
@@ -114,7 +114,7 @@ func (e *cannotUnmarshalError) unwind() *errChain {
 			return str
 		}
 
-		if e2, ok := e.Err.(*cannotUnmarshalError); ok {
+		if e2, ok := e.Err.(*CannotUnmarshalError); ok {
 			e = e2
 			continue
 		}
@@ -125,6 +125,6 @@ func (e *cannotUnmarshalError) unwind() *errChain {
 	}
 }
 
-func (e *cannotUnmarshalError) Error() string {
+func (e *CannotUnmarshalError) Error() string {
 	return e.unwind().Error()
 }

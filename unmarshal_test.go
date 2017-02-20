@@ -1,4 +1,4 @@
-package goquery
+package goq
 
 import (
 	"fmt"
@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/net/html"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -102,7 +103,7 @@ type sliceAttrSelector struct {
 func (f *FooBar) UnmarshalHTML(nodes []*html.Node) error {
 	f.unmarshalWasCalled = true
 
-	s := &Selection{}
+	s := &goquery.Selection{}
 	s = s.AddNodes(nodes...)
 
 	f.Attrs = []Attr{}
@@ -198,10 +199,10 @@ func TestNumbers(t *testing.T) {
 	asrt.Equal(uint16(100), a.BoolTest.Uint)
 }
 
-func checkErr(asrt *assert.Assertions, err error) *cannotUnmarshalError {
+func checkErr(asrt *assert.Assertions, err error) *CannotUnmarshalError {
 	asrt.Error(err)
-	asrt.IsType((*cannotUnmarshalError)(nil), err)
-	return err.(*cannotUnmarshalError)
+	asrt.IsType((*CannotUnmarshalError)(nil), err)
+	return err.(*CannotUnmarshalError)
 }
 
 func TestUnmarshalError(t *testing.T) {
@@ -211,7 +212,7 @@ func TestUnmarshalError(t *testing.T) {
 
 	err := Unmarshal([]byte(testPage), &a)
 
-	asrt.Contains(err.Error(), "[]goquery.ErrorFooBar[0]")
+	asrt.Contains(err.Error(), "[]goq.ErrorFooBar[0]")
 
 	e := checkErr(asrt, err)
 	e2 := checkErr(asrt, e.Err)
@@ -598,7 +599,7 @@ type page struct {
 type score int
 
 func (s *score) UnmarshalHTML(nodes []*html.Node) error {
-	sel := &Selection{}
+	sel := &goquery.Selection{}
 	sel = sel.AddNodes(nodes...)
 	num := strings.Split(sel.Text(), " ")[0]
 	n, err := strconv.ParseInt(num, 10, 64)
@@ -613,7 +614,7 @@ func (s *score) UnmarshalHTML(nodes []*html.Node) error {
 type item struct {
 	Link   string `goquery:".title a,[href]"`
 	Site   string `goquery:".title .sitestr,text"`
-	Points string `goquery:"@Next,.score,text"`
+	Points string `goquery:"!Next,.score,text"`
 }
 
 func TestHNPage(t *testing.T) {
