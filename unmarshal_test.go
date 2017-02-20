@@ -131,7 +131,7 @@ func (e *ErrorFooBar) UnmarshalHTML([]*html.Node) error {
 
 var vals = []string{"Foo", "Bar", "Baz", "Bang", "Zip"}
 
-func TestDecoder(t *testing.T) {
+func TestUnmarshal(t *testing.T) {
 	asrt := assert.New(t)
 
 	asrt.Implements((*Unmarshaler)(nil), new(FooBar))
@@ -606,6 +606,9 @@ func (s *score) UnmarshalHTML(nodes []*html.Node) error {
 	sel := &goquery.Selection{}
 	sel = sel.AddNodes(nodes...)
 	num := strings.Split(sel.Text(), " ")[0]
+	if num == "" {
+		return nil
+	}
 	n, err := strconv.ParseInt(num, 10, 64)
 	if err != nil {
 		return err
@@ -618,14 +621,13 @@ func (s *score) UnmarshalHTML(nodes []*html.Node) error {
 type item struct {
 	Link   string `goquery:".title a,[href]"`
 	Site   string `goquery:".title .sitestr,text"`
-	Points string `goquery:"!Next,.score,text"`
+	Points score  `goquery:"!Next,.score,text"`
 }
 
 func TestHNPage(t *testing.T) {
 	asrt := assert.New(t)
 
 	var p page
-	var p2 pageNoPtr
 
 	asrt.NoError(Unmarshal([]byte(hnPage), &p))
 	asrt.Len(p.Items, 30)
@@ -634,5 +636,16 @@ func TestHNPage(t *testing.T) {
 	i := p.Items[13546354]
 	asrt.Equal("http://crypto.stackexchange.com/questions/26336/sha512-faster-than-sha256", i.Link)
 	asrt.Equal("stackexchange.com", i.Site)
-	asrt.Equal("7 points", i.Points)
+	asrt.Equal(7, int(i.Points))
+
+	var p2 pageNoPtr
+
+	asrt.NoError(Unmarshal([]byte(hnPage), &p2))
+	asrt.Len(p2.Items, 30)
+	asrt.NotNil(p2.Items[13546354])
+
+	i2 := p2.Items[13546354]
+	asrt.Equal("http://crypto.stackexchange.com/questions/26336/sha512-faster-than-sha256", i2.Link)
+	asrt.Equal("stackexchange.com", i2.Site)
+	asrt.Equal(7, int(i2.Points))
 }
