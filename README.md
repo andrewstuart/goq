@@ -12,7 +12,8 @@ func Unmarshal(bs []byte, v interface{}) error
 ```
 Unmarshal takes a byte slice and a destination pointer to any interface{}, and
 unmarshals the document into the destination based on the rules above. Any error
-returned here can be expected to be of type CannotUnmarshalError.
+returned here will likely be of type CannotUnmarshalError, though an initial
+goquery error will pass through directly.
 
 Now included in GoQuery is the ability to declaratively unmarshal your HTML into
 go structs using struct tags composed of css selectors.
@@ -98,6 +99,33 @@ helps consumers in programmatically diagnosing the cause of their error.
 ```go
 func (e *CannotUnmarshalError) Error() string
 ```
+
+#### type Decoder
+
+```go
+type Decoder struct {
+}
+```
+
+Decoder implements the same API you will see in encoding/xml and encoding/json
+except that we do not currently support proper streaming decoding as it is not
+supported by goquery upstream.
+
+#### func  NewDecoder
+
+```go
+func NewDecoder(r io.Reader) *Decoder
+```
+NewDecoder returns a new decoder given an io.Reader
+
+#### func (*Decoder) Decode
+
+```go
+func (d *Decoder) Decode(dest interface{}) error
+```
+Decode will unmarshal the contents of the decoder when given an instance of an
+annotated type as its argument. It will return any errors encountered during
+either parsing the document or unmarshaling into the given object.
 
 #### type Unmarshaler
 
