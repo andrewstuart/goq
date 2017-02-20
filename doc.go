@@ -1,5 +1,5 @@
-// Package goq was built to allow to to declaratively unmarshal your HTML into
-// go structs using struct tags composed of css selectors.
+// Package goq was built to allow users to declaratively unmarshal HTML into go
+// structs using struct tags composed of css selectors.
 //
 // We've made a best effort to behave very similarly to JSON and XML decoding as
 // well as exposing as much information as possible in the event of an error to

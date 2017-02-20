@@ -2,7 +2,7 @@
 --
     import "astuart.co/goquery-unmarshal"
 
-Package goq was built to allow to to declaratively unmarshal your HTML into go
+Package goq was built to allow users to declaratively unmarshal HTML into go
 structs using struct tags composed of css selectors.
 
 We've made a best effort to behave very similarly to JSON and XML decoding as
