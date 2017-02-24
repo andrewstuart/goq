@@ -1,2 +1,6 @@
 language: go
-go_import_path: astuart.co/vpki
+go_import_path: astuart.co/goq
+
+matrix:
+  allow_failures:
+    - go: tip
