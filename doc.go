@@ -56,4 +56,4 @@
 // `[foo]` will be used to determine the string map key,but `[bar]` and `[baz]`
 // will be ignored, with the `[bang]` tag present S struct type taking
 // precedence.
-package goq // import "astuart.co/goq"
+package goq
