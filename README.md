@@ -2,10 +2,36 @@
 [![Build Status](https://travis-ci.org/andrewstuart/goq.svg?branch=master)](https://travis-ci.org/andrewstuart/goq)
 [![GoDoc](https://godoc.org/astuart.co/goq?status.svg)](https://godoc.org/astuart.co/goq)
 
---
-
 ```go
-import "astuart.co/goq"
+import (
+	"log"
+	"net/http"
+
+	"astuart.co/goq"
+)
+
+// Structured representation for github file name table
+type example struct {
+  Title string `goquery:"h1"`
+	Files []string `goquery:"table.files tbody tr.js-navigation-item td.content,text"`
+}
+
+func main() {
+  res, err := http.Get("https://github.com/andrewstuart/goq")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	var ex example
+	
+	err = goq.NewDecoder(res.Body).Decode(&ex)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Println(ex.Title, ex.Files)
+}
 ```
 
 Package goq was built to allow users to declaratively unmarshal HTML into go
