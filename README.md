@@ -1,5 +1,5 @@
 # goq
-[![Build Status](https://travis-ci.org/andrewstuart/goquery-unmarshaler.svg?branch=master)](https://travis-ci.org/andrewstuart/goquery-unmarshaler)
+[![Build Status](https://travis-ci.org/andrewstuart/goq.svg?branch=master)](https://travis-ci.org/andrewstuart/goq)
 --
     import "astuart.co/goquery-unmarshal"
 
