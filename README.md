@@ -15,7 +15,7 @@ import (
 // Structured representation for github file name table
 type example struct {
   Title string `goquery:"h1"`
-	Files []string `goquery:"table.files tbody tr.js-navigation-item td.content,text"`
+  Files []string `goquery:"table.files tbody tr.js-navigation-item td.content,text"`
 }
 
 func main() {
