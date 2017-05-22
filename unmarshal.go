@@ -21,8 +21,9 @@ type valFunc func(*goquery.Selection) string
 type goqueryTag string
 
 const (
-	prePfx  = '!'
-	tagName = "goquery"
+	prePfx    = '!'
+	tagName   = "goquery"
+	ignoreTag = "!ignore"
 )
 
 func (tag goqueryTag) preprocess(s *goquery.Selection) *goquery.Selection {
@@ -260,9 +261,15 @@ func unmarshalStruct(s *goquery.Selection, v reflect.Value) error {
 	for i := 0; i < t.NumField(); i++ {
 		tag := goqueryTag(t.Field(i).Tag.Get(tagName))
 
-		// If tag is empty and the object doesn't implement Unmarshaler, skip
-		if u, _ := indirect(v.Field(i)); tag == "" && u == nil {
+		if tag == ignoreTag {
 			continue
+		}
+
+		// If tag is empty and the object doesn't implement Unmarshaler, skip
+		if tag == "" {
+			if u, _ := indirect(v.Field(i)); u == nil {
+				continue
+			}
 		}
 
 		sel := tag.preprocess(s)
