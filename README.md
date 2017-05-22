@@ -1,7 +1,7 @@
 # goq
 [![Build Status](https://travis-ci.org/andrewstuart/goq.svg?branch=master)](https://travis-ci.org/andrewstuart/goq)
 --
-    import "astuart.co/goquery-unmarshal"
+    import "astuart.co/goq"
 
 Package goq was built to allow users to declaratively unmarshal HTML into go
 structs using struct tags composed of css selectors.
