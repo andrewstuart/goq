@@ -2,6 +2,8 @@
 [![Build Status](https://travis-ci.org/andrewstuart/goq.svg?branch=master)](https://travis-ci.org/andrewstuart/goq)
 [![GoDoc](https://godoc.org/astuart.co/goq?status.svg)](https://godoc.org/astuart.co/goq)
 
+## Example
+
 ```go
 import (
 	"log"
@@ -33,6 +35,8 @@ func main() {
 	log.Println(ex.Title, ex.Files)
 }
 ```
+
+## Details
 
 Package goq was built to allow users to declaratively unmarshal HTML into go
 structs using struct tags composed of css selectors.
