@@ -1,5 +1,6 @@
 # goq
 [![Build Status](https://travis-ci.org/andrewstuart/goq.svg?branch=master)](https://travis-ci.org/andrewstuart/goq)
+[![GoDoc](https://godoc.org/astuart.co/goq?status.svg)](https://godoc.org/astuart.co/goq)
 
 --
 
