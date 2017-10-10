@@ -16,6 +16,14 @@ type Unmarshaler interface {
 	UnmarshalHTML([]*html.Node) error
 }
 
+// NodeSelector is a quick utility function to get a goquery.Selection from a
+// slice of *html.Node. Useful for performing unmarshaling, since the decision
+// was made to use []*html.Node for maximum flexibility.
+func NodeSelector(nodes []*html.Node) *goquery.Selection {
+	sel := &goquery.Selection{}
+	return sel.AddNodes(nodes...)
+}
+
 type valFunc func(*goquery.Selection) string
 
 type goqueryTag string

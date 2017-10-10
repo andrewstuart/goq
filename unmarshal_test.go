@@ -8,7 +8,6 @@ import (
 
 	"golang.org/x/net/html"
 
-	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -103,8 +102,7 @@ type sliceAttrSelector struct {
 func (f *FooBar) UnmarshalHTML(nodes []*html.Node) error {
 	f.unmarshalWasCalled = true
 
-	s := &goquery.Selection{}
-	s = s.AddNodes(nodes...)
+	s := NodeSelector(nodes)
 
 	f.Attrs = []Attr{}
 	for _, node := range s.Find(".foobar thing").Nodes {
@@ -603,8 +601,7 @@ type pageNoPtr struct {
 type score int
 
 func (s *score) UnmarshalHTML(nodes []*html.Node) error {
-	sel := &goquery.Selection{}
-	sel = sel.AddNodes(nodes...)
+	sel := NodeSelector(nodes)
 	num := strings.Split(sel.Text(), " ")[0]
 	if num == "" {
 		return nil
