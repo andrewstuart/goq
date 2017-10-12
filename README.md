@@ -186,3 +186,7 @@ type Unmarshaler interface {
 ```
 
 Unmarshaler allows for custom implementations of unmarshaling logic
+
+## TODO
+
+- Callable goquery methods with args, via reflection
