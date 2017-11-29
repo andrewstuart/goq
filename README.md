@@ -16,12 +16,12 @@ import (
 
 // Structured representation for github file name table
 type example struct {
-  Title string `goquery:"h1"`
-  Files []string `goquery:"table.files tbody tr.js-navigation-item td.content,text"`
+	Title string `goquery:"h1"`
+	Files []string `goquery:"table.files tbody tr.js-navigation-item td.content,text"`
 }
 
 func main() {
-  res, err := http.Get("https://github.com/andrewstuart/goq")
+	res, err := http.Get("https://github.com/andrewstuart/goq")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -92,11 +92,11 @@ override any remaining "value selectors" that had not been used. For example,
 given:
 
     struct S {
-      F string `goquery:",[bang]"`
+    	F string `goquery:",[bang]"`
     }
 
     struct {
-      T map[string]S `goquery:"#someId,[foo],[bar],[baz]"`
+    	T map[string]S `goquery:"#someId,[foo],[bar],[baz]"`
     }
 
 `[foo]` will be used to determine the string map key,but `[bar]` and `[baz]`
