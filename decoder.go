@@ -30,7 +30,7 @@ func (d *Decoder) Decode(dest interface{}) error {
 	}
 	if d.doc == nil {
 		return &CannotUnmarshalError{
-			reason: "resulting document was nil",
+			Reason: "resulting document was nil",
 		}
 	}
 

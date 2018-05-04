@@ -25,8 +25,8 @@ type CannotUnmarshalError struct {
 	Val      string
 	FldOrIdx interface{}
 
-	v      reflect.Value
-	reason string
+	V      reflect.Value
+	Reason string
 }
 
 // This type is a mid-level abstraction to help understand the error printing logic
@@ -45,7 +45,7 @@ func (e errChain) tPath() string {
 		if err.FldOrIdx != nil {
 			switch nesting := err.FldOrIdx.(type) {
 			case string:
-				switch err.v.Type().Kind() {
+				switch err.V.Type().Kind() {
 				case reflect.Map:
 					nest += fmt.Sprintf("[%q]", nesting)
 				case reflect.Struct:
@@ -75,8 +75,8 @@ func (e errChain) Error() string {
 
 	// Avoid panic if we cannot get a type name for the Value
 	t := "unknown: invalid value"
-	if last.v.IsValid() {
-		t = last.v.Type().String()
+	if last.V.IsValid() {
+		t = last.V.Type().String()
 	}
 
 	msg := "could not unmarshal "
@@ -87,10 +87,10 @@ func (e errChain) Error() string {
 
 	msg += fmt.Sprintf(
 		"into '%s%s' (type %s): %s",
-		e.chain[0].v.Type(),
+		e.chain[0].V.Type(),
 		e.tPath(),
 		t,
-		last.reason,
+		last.Reason,
 	)
 
 	// If a generic error was reported elsewhere, report its message last
