@@ -171,7 +171,7 @@ func UnmarshalSelection(s *goquery.Selection, iface interface{}) error {
 		return &CannotUnmarshalError{V: v, Reason: nilValue}
 	}
 
-	u, v := indirect(v)
+	u, v := Indirect(v)
 
 	if u != nil {
 		return wrapUnmErr(u.UnmarshalHTML(s.Nodes), v)
@@ -181,7 +181,7 @@ func UnmarshalSelection(s *goquery.Selection, iface interface{}) error {
 }
 
 func unmarshalByType(s *goquery.Selection, v reflect.Value, tag goqueryTag) error {
-	u, v := indirect(v)
+	u, v := Indirect(v)
 
 	if u != nil {
 		return wrapUnmErr(u.UnmarshalHTML(s.Nodes), v)
@@ -275,7 +275,7 @@ func unmarshalStruct(s *goquery.Selection, v reflect.Value) error {
 
 		// If tag is empty and the object doesn't implement Unmarshaler, skip
 		if tag == "" {
-			if u, _ := indirect(v.Field(i)); u == nil {
+			if u, _ := Indirect(v.Field(i)); u == nil {
 				continue
 			}
 		}
@@ -322,19 +322,12 @@ func unmarshalArray(s *goquery.Selection, v reflect.Value, tag goqueryTag) error
 	return nil
 }
 
-func typeDeref(t reflect.Type) reflect.Type {
-	for t != nil && t.Kind() == reflect.Ptr {
-		t = t.Elem()
-	}
-	return t
-}
-
 func unmarshalSlice(s *goquery.Selection, v reflect.Value, tag goqueryTag) error {
 	slice := v
 	eleT := v.Type().Elem()
 
 	for i := 0; i < s.Length(); i++ {
-		newV := reflect.New(typeDeref(eleT))
+		newV := reflect.New(TypeDeref(eleT))
 
 		err := unmarshalByType(s.Eq(i), newV, tag)
 
@@ -395,7 +388,7 @@ func unmarshalMap(s *goquery.Selection, v reflect.Value, tag goqueryTag) error {
 
 	var err error
 	s.EachWithBreak(func(_ int, subS *goquery.Selection) bool {
-		newK, newV := reflect.New(typeDeref(keyT)), reflect.New(typeDeref(eleT))
+		newK, newV := reflect.New(TypeDeref(keyT)), reflect.New(TypeDeref(eleT))
 
 		err = unmarshalByType(subS, newK, tag)
 		if err != nil {
@@ -435,38 +428,4 @@ func unmarshalMap(s *goquery.Selection, v reflect.Value, tag goqueryTag) error {
 	}
 
 	return nil
-}
-
-// Stolen mostly from pkg/encoding/json/decode.go and removed some cases
-// (handling `null`) that goquery doesn't need to handle.
-func indirect(v reflect.Value) (Unmarshaler, reflect.Value) {
-	if v.Kind() != reflect.Ptr && v.Type().Name() != "" && v.CanAddr() {
-		v = v.Addr()
-	}
-	for {
-		// Load value from interface, but only if the result will be
-		// usefully addressable.
-		if v.Kind() == reflect.Interface && !v.IsNil() {
-			e := v.Elem()
-			if e.Kind() == reflect.Ptr && !e.IsNil() && (e.Elem().Kind() == reflect.Ptr) {
-				v = e
-				continue
-			}
-		}
-
-		if v.Kind() != reflect.Ptr {
-			break
-		}
-
-		if v.IsNil() {
-			v.Set(reflect.New(typeDeref(v.Type())))
-		}
-		if v.Type().NumMethod() > 0 {
-			if u, ok := v.Interface().(Unmarshaler); ok {
-				return u, reflect.Value{}
-			}
-		}
-		v = v.Elem()
-	}
-	return nil, v
 }
