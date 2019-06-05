@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/PuerkitoBio/goquery"
 
@@ -75,6 +76,7 @@ var (
 		return strings.TrimSpace(str)
 	}
 
+	vfMut   = sync.Mutex{}
 	vfCache = map[goqueryTag]valFunc{}
 )
 
@@ -86,6 +88,9 @@ func attrFunc(attr string) valFunc {
 }
 
 func (tag goqueryTag) valFunc() valFunc {
+	vfMut.Lock()
+	defer vfMut.Unlock()
+
 	if fn := vfCache[tag]; fn != nil {
 		return fn
 	}
