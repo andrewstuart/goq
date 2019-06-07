@@ -58,7 +58,7 @@ const testPage = `<!DOCTYPE html>
 		<div class="foobar">
 			<thing foo="yes">1</thing>
 			<foo arr="true">true</foo>
-			<bar arr="true">false</foo>
+			<bar arr="true">false</bar>
 			<float>1.2345</float>
 			<int>-123</int>
 			<uint>100</uint>
