@@ -8,6 +8,7 @@ import (
 
 	"golang.org/x/net/html"
 
+	"github.com/PuerkitoBio/goquery"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -177,6 +178,19 @@ func TestBoolean(t *testing.T) {
 
 	asrt.Equal(true, a.BoolTest.Foo)
 	asrt.Equal(false, a.BoolTest.Bar)
+}
+
+func BenchmarkBoolean(b *testing.B) {
+	var a struct {
+		BoolTest struct {
+			Foo bool `goquery:"foo"`
+			Bar bool `goquery:"bar"`
+		} `goquery:".foobar"`
+	}
+	d, _ := goquery.NewDocumentFromReader(strings.NewReader(testPage))
+	for i := 0; i < b.N; i++ {
+		UnmarshalSelection(d.Selection, &a)
+	}
 }
 
 func TestNumbers(t *testing.T) {

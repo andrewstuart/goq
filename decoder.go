@@ -2,6 +2,7 @@ package goq
 
 import (
 	"io"
+	"sync"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -10,8 +11,9 @@ import (
 // encoding/json except that we do not currently support proper streaming
 // decoding as it is not supported by goquery upstream.
 type Decoder struct {
-	err error
-	doc *goquery.Document
+	err   error
+	doc   *goquery.Document
+	cache sync.Map
 }
 
 // NewDecoder returns a new decoder given an io.Reader

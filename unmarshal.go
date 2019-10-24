@@ -76,8 +76,7 @@ var (
 		return strings.TrimSpace(str)
 	}
 
-	vfMut   = sync.Mutex{}
-	vfCache = map[goqueryTag]valFunc{}
+	vfCache sync.Map
 )
 
 func attrFunc(attr string) valFunc {
@@ -88,16 +87,14 @@ func attrFunc(attr string) valFunc {
 }
 
 func (tag goqueryTag) valFunc() valFunc {
-	vfMut.Lock()
-	defer vfMut.Unlock()
 
-	if fn := vfCache[tag]; fn != nil {
-		return fn
+	if fn, ok := vfCache.Load(tag); ok {
+		return fn.(valFunc)
 	}
 
 	srcArr := strings.Split(string(tag), ",")
 	if len(srcArr) < 2 {
-		vfCache[tag] = textVal
+		vfCache.Store(tag, textVal)
 		return textVal
 	}
 
@@ -117,7 +114,7 @@ func (tag goqueryTag) valFunc() valFunc {
 		f = textVal
 	}
 
-	vfCache[tag] = f
+	vfCache.Store(tag, f)
 	return f
 }
 
